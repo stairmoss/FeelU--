@@ -1,4 +1,4 @@
-// Bluetooth Controlled Obstacle Avoiding Robot
+
 // HC-05, Arduino Uno, L298N, 4 Motors, Ultrasonic Sensor
 
 // Motor Driver Pins
@@ -190,4 +190,5 @@ void stopMotors() {
   analogWrite(ENA, 0);
   analogWrite(ENB, 0);
 }
+
 // use in arduino IDE TO teach the arduino ensure the HC-O5 Sensor is working
