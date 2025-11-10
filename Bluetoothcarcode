@@ -1,0 +1,193 @@
+// Bluetooth Controlled Obstacle Avoiding Robot
+// HC-05, Arduino Uno, L298N, 4 Motors, Ultrasonic Sensor
+
+// Motor Driver Pins
+#define IN1 2
+#define IN2 3
+#define IN3 4
+#define IN4 5
+#define ENA 6  // PWM pin for left motors speed
+#define ENB 7  // PWM pin for right motors speed
+
+
+// Constants
+#define MOTOR_SPEED 200      // Speed (0-255)
+#define TURN_SPEED 180       // Turn speed
+#define SAFE_DISTANCE 25     // Distance in cm to avoid obstacle
+#define TURN_DELAY 500       // Time to turn in ms
+
+// Variables
+char command;                // Stores Bluetooth command
+bool autoMode = false;       // Auto/Manual mode flag
+long duration;
+int distance;
+
+void setup() {
+  // Initialize Serial for Bluetooth (HC-05 uses hardware serial)
+  Serial.begin(9600);
+ 
+  // Motor pins as OUTPUT
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
+ 
+  // Start with motors stopped
+  stopMotors();
+ 
+  Serial.println("Robot Ready!");
+}
+
+void loop() {
+  // Check for Bluetooth commands
+  if (Serial.available() > 0) {
+    command = Serial.read();
+    processCommand(command);
+  }
+ 
+  // If in auto mode, perform obstacle avoidance
+  if (autoMode) {
+    obstacleAvoidance();
+  }
+}
+
+void processCommand(char cmd) {
+  switch(cmd) {
+    case 'F':  // Forward
+      autoMode = false;
+      moveForward();
+      break;
+    case 'B':  // Backward
+      autoMode = false;
+      moveBackward();
+      break;
+    case 'L':  // Left
+      autoMode = false;
+      turnLeft();
+      break;
+    case 'R':  // Right
+      autoMode = false;
+      turnRight();
+      break;
+    case 'S':  // Stop
+      autoMode = false;
+      stopMotors();
+      break;
+    case 'A':  // Auto mode ON
+      autoMode = true;
+      Serial.println("Auto Mode ON");
+      break;
+    case 'M':  // Manual mode
+      autoMode = false;
+      stopMotors();
+      Serial.println("Manual Mode ON");
+      break;
+    default:
+      break;
+  }
+}
+
+void obstacleAvoidance() {
+  distance = getDistance();
+ 
+  if (distance > SAFE_DISTANCE) {
+    // Path is clear, move forward
+    moveForward();
+  } else {
+    // Obstacle detected
+    stopMotors();
+    delay(300);
+   
+    // Move back a bit
+    moveBackward();
+    delay(400);
+    stopMotors();
+    delay(200);
+   
+    // Check left and right distances
+    int rightDist = lookRight();
+    delay(300);
+    int leftDist = lookLeft();
+    delay(300);
+   
+    // Turn towards the side with more space
+    if (rightDist > leftDist) {
+      turnRight();
+      delay(TURN_DELAY);
+    } else {
+      turnLeft();
+      delay(TURN_DELAY);
+    }
+    stopMotors();
+  }
+}
+
+int getDistance() {
+ 
+
+ 
+  // Calculate distance in cm
+  distance = duration * 0.034 / 2;
+ 
+  return distance;
+}
+
+int lookRight() {
+  // In a more advanced setup, you'd use a servo to look right
+  // For now, we'll just check the current distance
+  return getDistance();
+}
+
+int lookLeft() {
+  // In a more advanced setup, you'd use a servo to look left
+  // For now, we'll just check the current distance
+  return getDistance();
+}
+
+void moveForward() {
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENA, MOTOR_SPEED);
+  analogWrite(ENB, MOTOR_SPEED);
+}
+
+void moveBackward() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+  analogWrite(ENA, MOTOR_SPEED);
+  analogWrite(ENB, MOTOR_SPEED);
+}
+
+void turnLeft() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENA, TURN_SPEED);
+  analogWrite(ENB, TURN_SPEED);
+}
+
+void turnRight() {
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+  analogWrite(ENA, TURN_SPEED);
+  analogWrite(ENB, TURN_SPEED);
+}
+
+void stopMotors() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
+}
+// use in arduino IDE TO teach the arduino ensure the HC-O5 Sensor is working
